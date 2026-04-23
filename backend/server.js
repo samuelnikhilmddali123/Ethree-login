@@ -10,9 +10,6 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 const connectDB = require('./config/db');
 const mongoose = require('mongoose');
 
-// Connect to Database
-connectDB();
-
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -21,6 +18,21 @@ const leaveRoutes = require('./routes/leaveRoutes');
 const utilsRoutes = require('./routes/utilsRoutes');
 
 const app = express();
+
+// Database Connection Middleware for Vercel
+const dbMiddleware = async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error('Database connection failed:', err.message);
+        res.status(500).json({ 
+            message: 'Database connection failed', 
+            error: err.message,
+            hasUri: !!process.env.MONGODB_URI 
+        });
+    }
+};
 
 // Middleware
 app.use(cors({
@@ -33,9 +45,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(morgan('dev'));
-
-// Removed: DB connection middleware for Vercel
-
+app.use(dbMiddleware); // Ensure DB is connected for every request
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -54,7 +64,8 @@ app.get('/api/health', (req, res) => {
         environment: {
             hasMongoUri: !!process.env.MONGODB_URI,
             hasJwtSecret: !!process.env.JWT_SECRET,
-            nodeEnv: process.env.NODE_ENV
+            nodeEnv: process.env.NODE_ENV,
+            isVercel: !!process.env.VERCEL
         },
         timestamp: new Date().toISOString()
     });
@@ -83,56 +94,51 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
     console.error(`Error ${statusCode}: ${err.message}`);
-    console.error(err.stack);
-
+    
     res.status(statusCode).json({
         message: err.message,
-        stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack,
+        error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
+        hasJwt: !!process.env.JWT_SECRET
     });
 });
 
+// Socket.io Setup (Optional for Vercel)
 const http = require('http');
-const { Server } = require("socket.io");
-
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: [
-            'http://localhost:5173',
-            'http://localhost:5174',
-            'https://track.stackvil.com'
-        ],
-        credentials: true
-    }
-});
-
-// Socket.io connection
-io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id);
-
-    socket.on('join_room', (emp_no) => {
-        socket.join(emp_no);
-        console.log(`Socket ${socket.id} joined room: ${emp_no}`);
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
-    });
-});
-
-// Make io accessible in routes
-app.set('io', io);
-
-// Initialize Scheduler
-const initScheduler = require('./scheduler');
-initScheduler(io);
-
-const PORT = process.env.PORT || 5000;
 
 if (!process.env.VERCEL) {
+    const { Server } = require("socket.io");
+    const io = new Server(server, {
+        cors: {
+            origin: [
+                'http://localhost:5173',
+                'http://localhost:5174',
+                'https://ethree-login.vercel.app'
+            ],
+            credentials: true
+        }
+    });
+
+    io.on('connection', (socket) => {
+        console.log('New client connected:', socket.id);
+        socket.on('join_room', (emp_no) => {
+            socket.join(emp_no);
+            console.log(`Socket ${socket.id} joined room: ${emp_no}`);
+        });
+        socket.on('disconnect', () => {
+            console.log('Client disconnected:', socket.id);
+        });
+    });
+
+    app.set('io', io);
+
+    // Initialize Scheduler
+    const initScheduler = require('./scheduler');
+    initScheduler(io);
+
+    const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
-        console.log(`Health check: http://localhost:${PORT}/api/health`);
     });
 }
 
