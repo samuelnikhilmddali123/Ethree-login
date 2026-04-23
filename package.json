@@ -8,7 +8,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "start": "node backend/server.js",
-    "build": "cd frontend && npm install && npm run build && mv dist ../dist"
+    "build": "cd frontend && npm install && npm run build && rm -rf ../public && mv dist ../public"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
