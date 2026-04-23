@@ -25,7 +25,6 @@
     }
   },
   "dependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.59.0",
     "@tailwindcss/vite": "^4.1.18",
     "@vitejs/plugin-react": "^5.1.1",
     "@vladmandic/face-api": "^1.7.15",
