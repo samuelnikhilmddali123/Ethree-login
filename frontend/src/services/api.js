@@ -3,7 +3,7 @@ import axios from 'axios';
 // Default local backend URL, can be overridden by Vercel environment variables
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api/' : 'http://localhost:5000/api/');
 
-console.log('[API] Environment: Local Development');
+console.log(`[API] Environment: ${import.meta.env.PROD ? 'Production' : 'Local Development'}`);
 console.log('[API] Final Backend URL:', API_URL);
 
 const api = axios.create({
