@@ -8,6 +8,7 @@ const options = {
             title: 'Ethree Login API Documentation',
             version: '1.0.0',
         },
+    },
     apis: [
         path.join(__dirname, '../routes/*.js'),
         path.resolve(process.cwd(), './routes/*.js'),
