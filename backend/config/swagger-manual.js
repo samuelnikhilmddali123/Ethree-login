@@ -1,5 +1,5 @@
-const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const path = require('path');
 
 const options = {
     definition: {
@@ -10,7 +10,7 @@ const options = {
         },
         servers: [{ url: 'https://ethree-login.vercel.app/_/backend' }],
     },
-    apis: ['./routes/*.js'],
+    apis: [path.join(__dirname, '../routes/*.js')],
 };
 
 const specs = swaggerJsdoc(options);
