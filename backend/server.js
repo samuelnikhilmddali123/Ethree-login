@@ -16,7 +16,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const utilsRoutes = require('./routes/utilsRoutes');
-const { swaggerUi, specs } = require('./config/swagger');
+const { getSwaggerHtml } = require('./config/swagger-manual');
 
 const app = express();
 
@@ -73,14 +73,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Routes
-const swaggerOptions = {
-    customCssUrl: 'https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css',
-    customJs: [
-        'https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js',
-        'https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js'
-    ]
-};
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
+app.get('/api/docs', getSwaggerHtml);
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/admin', adminRoutes);
