@@ -16,6 +16,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const utilsRoutes = require('./routes/utilsRoutes');
+const { swaggerUi, specs } = require('./config/swagger');
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Routes
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/admin', adminRoutes);
