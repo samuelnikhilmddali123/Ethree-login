@@ -8,14 +8,15 @@ const options = {
             title: 'Ethree Login API Documentation',
             version: '1.0.0',
         },
-        servers: [{ url: 'https://ethree-login.vercel.app/_/backend' }],
-    },
-    apis: [path.join(__dirname, '../routes/*.js')],
+    apis: [
+        path.join(__dirname, '../routes/*.js'),
+        path.resolve(process.cwd(), './routes/*.js'),
+        path.resolve(process.cwd(), 'backend/routes/*.js')
+    ],
 };
 
-const specs = swaggerJsdoc(options);
-
 const getSwaggerHtml = (req, res) => {
+    const specs = swaggerJsdoc(options);
     const html = `
     <!DOCTYPE html>
     <html lang="en">
