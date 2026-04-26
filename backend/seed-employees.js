@@ -45,7 +45,7 @@ const seedEmployees = async () => {
             emp_no: 'ADMIN001',
             name: 'admin',
             email: 'admin@stackvil.com',
-            password: 'stackvil',
+            password: 'admin123',
             full_name: 'Stackvil Admin',
             role: 'admin',
             status: 'active',

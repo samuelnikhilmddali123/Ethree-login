@@ -25,6 +25,9 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI is not defined in environment variables');
     }
 
+    const maskedUri = process.env.MONGODB_URI.replace(/:([^@]+)@/, ':****@');
+    console.log(`📡 Attempting to connect to MongoDB: ${maskedUri}`);
+
     cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
       console.log(`✅ MongoDB Connected: ${mongoose.connection.host}`);
       return mongoose;
@@ -35,7 +38,10 @@ const connectDB = async () => {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    console.error(`❌ MongoDB Connection Error: ${e.message}`);
+    console.error(`❌ MongoDB Connection Error Details:`);
+    console.error(`   Message: ${e.message}`);
+    console.error(`   Code: ${e.code}`);
+    console.error(`   Syscall: ${e.syscall}`);
     throw e;
   }
 
