@@ -73,7 +73,14 @@ app.get('/api/health', (req, res) => {
 });
 
 // Routes
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));
+const swaggerOptions = {
+    customCssUrl: 'https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css',
+    customJs: [
+        'https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js',
+        'https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js'
+    ]
+};
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/admin', adminRoutes);
