@@ -6,6 +6,7 @@ const { getISTTime, getServerTime } = require('./utilsController');
 const crypto = require('crypto');
 const Session = require('../models/Session');
 const Settings = require('../models/Settings');
+const ProxyAttempt = require('../models/ProxyAttempt');
 
 // @desc    Register a new employee
 // @route   POST /api/auth/register
@@ -120,6 +121,46 @@ const loginEmployee = async (req, res) => {
 
             console.log(`[AUTH] Face check for "${cleanEmpNo}": Distance = ${distance.toFixed(4)}`);
             if (distance > 0.60) {
+                // Log Proxy Attempt
+                try {
+                    const clientIp = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+                    
+                    // Optional: Find who the face actually belongs to
+                    let detectedEmpId = 'Unknown Face';
+                    let detectedEmpName = 'Unknown';
+                    
+                    const allUsers = await Employee.find({ face_descriptor: { $exists: true, $ne: [] } });
+                    for(const u of allUsers) {
+                        // Use a slightly stricter threshold for auto-detection
+                        let sumD = 0;
+                        const d1 = descriptor1;
+                        const d2 = u.face_descriptor;
+                        const lenD = Math.min(d1.length, d2.length, 128);
+                        for(let i=0; i<lenD; i++) {
+                            const diff = (d1[i] || 0) - (d2[i] || 0);
+                            sumD += diff * diff;
+                        }
+                        if(Math.sqrt(sumD) < 0.55) {
+                            detectedEmpId = u.emp_no;
+                            detectedEmpName = u.full_name || u.name;
+                            break;
+                        }
+                    }
+
+                    await ProxyAttempt.create({
+                        login_employee_id: employee.emp_no,
+                        login_employee_name: employee.full_name || employee.name,
+                        detected_face_employee_id: detectedEmpId,
+                        detected_employee_name: detectedEmpName,
+                        image_data: req.body.image_data || '', 
+                        device_info: device_info || 'Unknown',
+                        ip_address: clientIp,
+                        timestamp: new Date()
+                    });
+                } catch (proxyErr) {
+                    console.error('[AUTH] Failed to log proxy attempt:', proxyErr.message);
+                }
+
                 return res.status(403).json({ message: 'Face verification failed. Access denied.' });
             }
         } else if (employee.is_face_enabled && !face_descriptor) {

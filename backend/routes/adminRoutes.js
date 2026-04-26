@@ -19,11 +19,16 @@ const {
     updateMonthlyAttendance,
     getSettings,
     updateSettings,
-    detectWifiSettings
+    detectWifiSettings,
+    getEmployeesStatus,
+    getProxyAttempts,
+    deleteProxyAttempt,
+    clearProxyAttempts
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/auth');
 
 router.get('/employees', protect, admin, getEmployees);
+router.get('/employees/status', protect, admin, getEmployeesStatus);
 router.post('/employees', protect, admin, createEmployee);
 router.put('/employees/:emp_no', protect, admin, updateEmployee);
 router.delete('/employees/:emp_no', protect, admin, deleteEmployee);
@@ -43,6 +48,10 @@ router.post('/force-logout/:emp_no', protect, admin, forceLogoutEmployee);
 router.get('/settings', protect, admin, getSettings);
 router.post('/settings', protect, admin, updateSettings);
 router.get('/detect-wifi', protect, admin, detectWifiSettings);
+
+router.get('/proxy-attempts', protect, admin, getProxyAttempts);
+router.delete('/proxy-attempts/:id', protect, admin, deleteProxyAttempt);
+router.delete('/proxy-attempts', protect, admin, clearProxyAttempts);
 
 
 module.exports = router;

@@ -3,6 +3,7 @@ const Attendance = require('../models/Attendance');
 const LoginRequest = require('../models/LoginRequest');
 const Task = require('../models/Task');
 const Settings = require('../models/Settings');
+const ProxyAttempt = require('../models/ProxyAttempt');
 const bcrypt = require('bcryptjs');
 const { getISTTime } = require('./utilsController');
 const { exec } = require('child_process');
@@ -949,6 +950,71 @@ const detectWifiSettings = async (req, res) => {
     }
 };
 
+// @desc    Lightweight employee status check
+// @route   GET /api/admin/employees/status
+const getEmployeesStatus = async (req, res) => {
+    try {
+        const istTime = getISTTime();
+        const today = istTime.date;
+        const sevenPMIST = istTime.sevenPM;
+        const now = new Date();
+        const isPastSevenPM = now >= sevenPMIST || istTime.hour >= 19;
+
+        const employees = await Employee.find({}, 'emp_no');
+        const activeAttendance = isPastSevenPM 
+            ? [] 
+            : await Attendance.find({ date: today, logout_time: null }, 'emp_no');
+        
+        const activeSet = new Set(activeAttendance.map(a => a.emp_no));
+
+        const statuses = employees.map(e => ({
+            emp_no: e.emp_no,
+            status: activeSet.has(e.emp_no) ? 'online' : 'offline'
+        }));
+
+        res.json(statuses);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// @desc    Get all proxy attempts
+// @route   GET /api/admin/proxy-attempts
+const getProxyAttempts = async (req, res) => {
+    try {
+        const attempts = await ProxyAttempt.find({}).sort({ timestamp: -1 });
+        res.json(attempts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// @desc    Delete a specific proxy attempt
+// @route   DELETE /api/admin/proxy-attempts/:id
+const deleteProxyAttempt = async (req, res) => {
+    try {
+        await ProxyAttempt.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Log entry deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// @desc    Clear all proxy attempts
+// @route   DELETE /api/admin/proxy-attempts
+const clearProxyAttempts = async (req, res) => {
+    try {
+        await ProxyAttempt.deleteMany({});
+        res.json({ message: 'All logs cleared' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = {
     getEmployees,
     getDailyReports,
@@ -968,5 +1034,9 @@ module.exports = {
     updateSettings,
     detectWifiSettings,
     getMonthlyAttendance,
-    updateMonthlyAttendance
+    updateMonthlyAttendance,
+    getEmployeesStatus,
+    getProxyAttempts,
+    deleteProxyAttempt,
+    clearProxyAttempts
 };
