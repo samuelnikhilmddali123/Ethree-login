@@ -417,5 +417,20 @@ const requestLoginPermission = async (req, res) => {
     }
 };
 
-module.exports = { registerEmployee, loginEmployee, logoutEmployee, changePassword, requestLoginPermission };
+// @desc    Get current user profile
+// @route   GET /api/auth/me
+const getMe = async (req, res) => {
+    try {
+        const employee = await Employee.findById(req.user.id).select('-password');
+        if (!employee) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(employee);
+    } catch (error) {
+        console.error('Get Me Error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+module.exports = { registerEmployee, loginEmployee, logoutEmployee, changePassword, requestLoginPermission, getMe };
 
